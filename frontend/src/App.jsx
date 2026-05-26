@@ -10,6 +10,7 @@ import AddEntryPage from './pages/AddEntryPage'
 import EntryDetailPage from './pages/EntryDetailPage'
 import StatsPage from './pages/StatsPage'
 import ProfilePage from './pages/ProfilePage'
+import EditEntryPage from './pages/EditEntryPage'
 
 // Protect routes — redirect to login if not authenticated
 function PrivateRoute({ children }) {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/library" element={<PrivateRoute><Layout><LibraryPage /></Layout></PrivateRoute>} />
         <Route path="/library/add" element={<PrivateRoute><Layout><AddEntryPage /></Layout></PrivateRoute>} />
         <Route path="/library/:id" element={<PrivateRoute><Layout><EntryDetailPage /></Layout></PrivateRoute>} />
+        <Route path="/library/:id/edit" element={<PrivateRoute><Layout><EditEntryPage /></Layout></PrivateRoute>} />
         <Route path="/stats" element={<PrivateRoute><Layout><StatsPage /></Layout></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Layout><ProfilePage /></Layout></PrivateRoute>} />
 
