@@ -2,6 +2,8 @@
 
 Your personal media diary — track anime, movies, series, music, and novels all in one place.
 
+🌍 Live Website: https://medianest-gray.vercel.app/
+
 ## Tech Stack
 
 - **Frontend:** React + Vite + Tailwind CSS + Zustand
