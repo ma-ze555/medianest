@@ -1,16 +1,20 @@
 const axios = require("axios");
 
+// Helper: delay in ms
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // @desc    Search anime via Jikan API (MyAnimeList)
 // @route   GET /api/search/anime?q=query
 // @access  Private
 const searchAnime = async (req, res) => {
   const { q } = req.query;
-  try {
+
+  const fetchAnime = async () => {
     const response = await axios.get(
       `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=10`,
-      { timeout: 10000 }
+      { timeout: 12000 }
     );
-    const results = response.data.data.map((item) => ({
+    return response.data.data.map((item) => ({
       externalId: String(item.mal_id),
       title: item.title,
       coverImage: item.images?.jpg?.image_url || "",
@@ -19,11 +23,21 @@ const searchAnime = async (req, res) => {
       totalEpisodes: item.episodes || 0,
       category: "anime",
     }));
+  };
+
+  try {
+    const results = await fetchAnime();
     res.json(results);
   } catch (error) {
-    // Jikan rate limit returns 429 — give a helpful message
     if (error.response?.status === 429) {
-      return res.status(429).json({ message: "Too many requests. Please wait a few seconds and try again." });
+      // Retry once after 1.5 seconds
+      try {
+        await delay(1500);
+        const results = await fetchAnime();
+        return res.json(results);
+      } catch {
+        return res.status(429).json({ message: "Too many requests. Please wait a few seconds and try again." });
+      }
     }
     res.status(500).json({ message: "Failed to fetch anime data. Try again in a moment." });
   }

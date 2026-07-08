@@ -38,11 +38,14 @@ export default function AddEntryPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
     setSearching(true)
+    setSearchResults([])
     try {
+      // Add small delay to respect Jikan rate limits
+      await new Promise(resolve => setTimeout(resolve, 500))
       const results = await searchExternal(category, searchQuery)
       setSearchResults(results)
-    } catch {
-      toast.error('Search failed')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Search failed. Try again in a moment.')
     } finally {
       setSearching(false)
     }
