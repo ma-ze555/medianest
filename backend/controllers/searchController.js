@@ -3,42 +3,48 @@ const axios = require("axios");
 // Helper: delay in ms
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// @desc    Search anime via Jikan API (MyAnimeList)
+// @desc    Search anime via AniList GraphQL API (more reliable than Jikan)
 // @route   GET /api/search/anime?q=query
 // @access  Private
 const searchAnime = async (req, res) => {
   const { q } = req.query;
 
-  const fetchAnime = async () => {
-    const response = await axios.get(
-      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=10`,
-      { timeout: 12000 }
+  const query = `
+    query ($search: String) {
+      Page(perPage: 10) {
+        media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+          idMal
+          title { romaji english }
+          coverImage { large }
+          description(asHtml: false)
+          genres
+          episodes
+          averageScore
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await axios.post(
+      "https://graphql.anilist.co",
+      { query, variables: { search: q } },
+      { headers: { "Content-Type": "application/json" }, timeout: 12000 }
     );
-    return response.data.data.map((item) => ({
-      externalId: String(item.mal_id),
-      title: item.title,
-      coverImage: item.images?.jpg?.image_url || "",
-      description: item.synopsis || "",
-      genres: item.genres?.map((g) => g.name) || [],
+
+    const media = response.data?.data?.Page?.media || [];
+    const results = media.map((item) => ({
+      externalId: String(item.idMal || item.id || ""),
+      title: item.title?.english || item.title?.romaji || "Unknown",
+      coverImage: item.coverImage?.large || "",
+      description: item.description?.replace(/<[^>]*>/g, "") || "",
+      genres: item.genres || [],
       totalEpisodes: item.episodes || 0,
       category: "anime",
     }));
-  };
 
-  try {
-    const results = await fetchAnime();
     res.json(results);
   } catch (error) {
-    if (error.response?.status === 429) {
-      // Retry once after 1.5 seconds
-      try {
-        await delay(1500);
-        const results = await fetchAnime();
-        return res.json(results);
-      } catch {
-        return res.status(429).json({ message: "Too many requests. Please wait a few seconds and try again." });
-      }
-    }
     res.status(500).json({ message: "Failed to fetch anime data. Try again in a moment." });
   }
 };
