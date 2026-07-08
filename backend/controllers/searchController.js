@@ -7,7 +7,8 @@ const searchAnime = async (req, res) => {
   const { q } = req.query;
   try {
     const response = await axios.get(
-      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=10`
+      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=10`,
+      { timeout: 10000 }
     );
     const results = response.data.data.map((item) => ({
       externalId: String(item.mal_id),
@@ -20,7 +21,11 @@ const searchAnime = async (req, res) => {
     }));
     res.json(results);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch anime data" });
+    // Jikan rate limit returns 429 — give a helpful message
+    if (error.response?.status === 429) {
+      return res.status(429).json({ message: "Too many requests. Please wait a few seconds and try again." });
+    }
+    res.status(500).json({ message: "Failed to fetch anime data. Try again in a moment." });
   }
 };
 

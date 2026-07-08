@@ -22,9 +22,13 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/media", require("./routes/mediaRoutes"));
 app.use("/api/search", require("./routes/searchRoutes"));
 
-// Health check
+// Health check + wake-up endpoint
 app.get("/", (req, res) => {
   res.json({ message: "MediaNest API is running" });
+});
+
+app.get("/api/ping", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 const PORT = process.env.PORT || 5000;
